@@ -1,0 +1,35 @@
+version: "3.9"
+
+services:
+  django:
+    build: .
+    container_name: clothesline_django
+    command: python manage.py runserver 0.0.0.0:8000
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+    environment:
+      - DB_HOST=db
+      - DB_NAME=clothesline
+      - DB_USER=postgres
+      - DB_PASSWORD=postgres
+      - DEBUG=1
+    depends_on:
+      - db
+
+  db:
+    image: postgres:16
+    container_name: clothesline_db
+    restart: always
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: clothesline
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:

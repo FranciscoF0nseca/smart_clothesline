@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+
+{% block title %}Smart Clothesline - Registo{% endblock %}
+
+{% block content %}
+
+<div class="flex items-center justify-center">
+  <div class="w-full max-w-md">
+
+    <!-- CARD -->
+    <div class="bg-white/90 backdrop-blur border border-slate-100
+                rounded-2xl shadow-xl p-8 space-y-6">
+
+      <!-- LOGO -->
+      <div class="flex flex-col items-center gap-2">
+        <div class="h-14 w-14 rounded-2xl
+                    bg-gradient-to-br from-primary-500 to-primary-600
+                    flex items-center justify-center shadow-md">
+          <i data-lucide="cloud-sun" class="w-7 h-7 text-slate-900"></i>
+        </div>
+        <h1 class="text-xl font-semibold">Criar Conta</h1>
+        <p class="text-sm text-slate-500 text-center">
+          Registe-se para controlar o seu estendal inteligente.
+        </p>
+      </div>
+
+      <!-- ERRO GERAL -->
+      {% if errors.general %}
+        <div class="rounded-xl border border-red-200 bg-red-50
+                    px-4 py-3 text-sm text-red-700">
+          {{ errors.general }}
+        </div>
+      {% endif %}
+
+      <!-- FORM -->
+      <form method="POST" action="{% url 'registo' %}" class="space-y-4">
+        {% csrf_token %}
+
+        <!-- USERNAME -->
+        <div>
+          <label for="username" class="block text-sm font-medium">
+            Username
+          </label>
+          <input
+            id="username"
+            name="username"
+            type="text"
+            value="{{ form.username|default:'' }}"
+            placeholder="O seu username"
+            class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2
+                   focus:outline-none focus:ring-2 focus:ring-primary-500">
+          {% if errors.username %}
+            <p class="text-xs text-red-600 mt-1">{{ errors.username }}</p>
+          {% endif %}
+        </div>
+
+        <!-- EMAIL -->
+        <div>
+          <label for="email" class="block text-sm font-medium">
+            Email
+          </label>
+          <input
+            id="email"
+            name="email"
+            type="email"
+            value="{{ form.email|default:'' }}"
+            placeholder="email@exemplo.com"
+            class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2
+                   focus:outline-none focus:ring-2 focus:ring-primary-500">
+          {% if errors.email %}
+            <p class="text-xs text-red-600 mt-1">{{ errors.email }}</p>
+          {% endif %}
+        </div>
+
+        <!-- PASSWORD -->
+        <div>
+          <label for="password1" class="block text-sm font-medium">
+            Password
+          </label>
+          <input
+            id="password1"
+            name="password1"
+            type="password"
+            placeholder="••••••••"
+            class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2
+                   focus:outline-none focus:ring-2 focus:ring-primary-500">
+          {% if errors.password1 %}
+            <p class="text-xs text-red-600 mt-1">{{ errors.password1 }}</p>
+          {% endif %}
+
+          <!-- REGRAS -->
+          <ul class="mt-2 space-y-1 text-xs text-slate-500">
+            <li id="rule-length">• Pelo menos 8 caracteres</li>
+            <li id="rule-upper">• Pelo menos 1 letra maiúscula</li>
+            <li id="rule-lower">• Pelo menos 1 letra minúscula</li>
+            <li id="rule-digit">• Pelo menos 1 número</li>
+            <li id="rule-match">• As passwords devem coincidir</li>
+          </ul>
+        </div>
+
+        <!-- CONFIRM -->
+        <div>
+          <label for="password2" class="block text-sm font-medium">
+            Confirmar Password
+          </label>
+          <input
+            id="password2"
+            name="password2"
+            type="password"
+            placeholder="Repetir password"
+            class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2
+                   focus:outline-none focus:ring-2 focus:ring-primary-500">
+          {% if errors.password2 %}
+            <p class="text-xs text-red-600 mt-1">{{ errors.password2 }}</p>
+          {% endif %}
+        </div>
+
+        <!-- SUBMIT -->
+        <button
+          type="submit"
+          class="w-full mt-2 inline-flex items-center justify-center
+                 rounded-xl
+                 bg-gradient-to-r from-primary-500 to-primary-600
+                 px-4 py-2 text-sm font-semibold
+                 text-slate-500
+                 border border-slate-300
+                 hover:border-slate-400
+                 hover:from-primary-600 hover:to-primary-700
+                 transition">
+          Criar Conta
+        </button>
+      </form>
+
+    </div>
+  </div>
+</div>
+
+<script>lucide.createIcons();</script>
+
+{% endblock %}

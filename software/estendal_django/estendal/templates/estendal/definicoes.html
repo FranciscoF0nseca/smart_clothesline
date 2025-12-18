@@ -1,0 +1,146 @@
+{% extends "base.html" %}
+
+{% block title %}Smart Clothesline - Dashboard{% endblock %}
+
+{% block content %}
+
+<main class="flex-1 flex justify-center">
+  <div class="w-full max-w-[1200px] px-8 py-8 space-y-8">
+
+    <!-- Header -->
+    <header>
+      <h1 class="text-2xl font-semibold text-slate-900">Definições</h1>
+      <p class="text-sm text-slate-500">
+        Gerir conta, dispositivo e preferências do sistema.
+      </p>
+    </header>
+
+    <!-- Grid -->
+    <section class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+
+      <!-- COLUNA ESQUERDA -->
+      <div class="xl:col-span-2 space-y-6">
+
+        <!-- Conta do Utilizador -->
+        <form method="post"
+              class="bg-white/90 border border-slate-100 rounded-2xl shadow-lg p-6 space-y-4">
+          {% csrf_token %}
+
+          <h3 class="text-lg font-semibold flex items-center gap-2">
+            <i data-lucide="user" class="w-5 h-5"></i>
+            Conta do Utilizador
+          </h3>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label class="text-sm font-medium">Nome</label>
+              <input
+                type="text"
+                name="nome"
+                value="{{ request.user.username }}"
+                class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2 focus:ring-2 focus:ring-primary-500">
+            </div>
+
+            <div>
+              <label class="text-sm font-medium">Email</label>
+              <input
+                type="email"
+                name="email"
+                value="{{ request.user.email }}"
+                class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2 focus:ring-2 focus:ring-primary-500">
+            </div>
+
+            <div class="md:col-span-2">
+              <label class="text-sm font-medium">Nova Password</label>
+              <input
+                type="password"
+                name="nova_password"
+                placeholder="Deixar em branco para não alterar"
+                class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2 focus:ring-2 focus:ring-primary-500">
+            </div>
+          </div>
+
+          {% if errors.password1 %}
+            <p class="text-xs text-red-600 mt-1">{{ errors.password1 }}</p>
+          {% endif %}
+
+          <!-- Regras de password -->
+          <ul class="mt-2 space-y-1 text-xs text-slate-500">
+            <li>• Pelo menos 8 caracteres</li>
+            <li>• Pelo menos 1 letra maiúscula</li>
+            <li>• Pelo menos 1 letra minúscula</li>
+            <li>• Pelo menos 1 número</li>
+          </ul>
+
+          <div class="flex justify-end">
+            <button
+              type="submit"
+              class="w-full mt-2 inline-flex items-center justify-center
+                     rounded-xl
+                     bg-gradient-to-r from-primary-500 to-primary-600
+                     px-4 py-2 text-sm font-semibold
+                     text-slate-500
+                     border border-slate-300
+                     hover:border-slate-400
+                     hover:from-primary-600 hover:to-primary-700
+                     transition">
+              Mudar Password
+            </button>
+          </div>
+        </form>
+
+        <!-- Modo Automático -->
+        <div class="bg-white/90 border border-slate-100 rounded-2xl shadow-lg p-6 space-y-4">
+          <h3 class="text-lg font-semibold flex items-center gap-2">
+            <i data-lucide="cpu" class="w-5 h-5"></i>
+            Modo Automático
+          </h3>
+
+          {% for item in modo_automatico %}
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="font-medium">{{ item.label }}</p>
+              <p class="text-xs text-slate-500">{{ item.desc }}</p>
+            </div>
+            <input
+              type="checkbox"
+              {% if item.checked %}checked{% endif %}
+              class="h-5 w-5 rounded border-slate-300 text-primary-600 focus:ring-primary-500">
+          </div>
+          {% endfor %}
+        </div>
+
+        <!-- Notificações -->
+        <div class="bg-white/90 border border-slate-100 rounded-2xl shadow-lg p-6 space-y-4">
+          <h3 class="text-lg font-semibold flex items-center gap-2">
+            <i data-lucide="bell" class="w-5 h-5"></i>
+            Notificações
+          </h3>
+
+          <div class="flex items-center justify-between">
+            <span>Notificações Push</span>
+            <input type="checkbox" checked class="h-5 w-5">
+          </div>
+
+          <div class="flex items-center justify-between">
+            <span>Notificações por Email</span>
+            <input type="checkbox" class="h-5 w-5">
+          </div>
+        </div>
+
+      </div>
+
+      <!-- COLUNA DIREITA -->
+      <div class="bg-white/90 border border-slate-100 rounded-2xl shadow-lg p-6 flex flex-col items-center justify-center text-center gap-3">
+        <i data-lucide="wifi-off" class="w-10 h-10 text-slate-400"></i>
+        <p class="font-semibold">Nenhum dispositivo conectado</p>
+        <p class="text-sm text-slate-500">
+          Adicione um estendal para aceder às definições do dispositivo.
+        </p>
+      </div>
+
+    </section>
+  </div>
+</main>
+
+{% endblock %}

@@ -1,0 +1,54 @@
+{% if rack %}
+<div id="device-modal"
+     class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/40">
+
+  <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 border border-slate-100">
+    
+    <!-- Header -->
+    <div class="flex items-start justify-between mb-4">
+      <div>
+        <h3 class="text-lg font-semibold text-slate-900">Estendal</h3>
+        <p class="text-sm text-slate-500">Informações do dispositivo</p>
+      </div>
+
+      <button data-close-device-modal
+              class="h-8 w-8 rounded-full flex items-center justify-center hover:bg-slate-100">
+        <i data-lucide="x" class="w-4 h-4"></i>
+      </button>
+    </div>
+
+    <!-- Conteúdo -->
+    <div class="space-y-3 text-sm">
+      <div class="flex justify-between">
+        <span class="text-slate-500">Nome</span>
+        <span class="font-medium text-slate-900">{{ rack.name }}</span>
+      </div>
+
+      <div class="flex justify-between">
+        <span class="text-slate-500">Nº de Série</span>
+        <span class="font-medium text-slate-900">
+          {{ rack.serial_number|default:"—" }}
+        </span>
+      </div>
+
+      {% if rack.location %}
+      <div class="flex justify-between">
+        <span class="text-slate-500">Localização</span>
+        <span class="font-medium text-slate-900">{{ rack.location }}</span>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Footer -->
+    <div class="mt-6 flex justify-end">
+      <a href="{% url 'definicoes' %}"
+         class="inline-flex items-center gap-2 rounded-xl border border-slate-200
+                px-3 py-2 text-sm hover:bg-slate-50">
+        <i data-lucide="settings" class="w-4 h-4"></i>
+        Definições
+      </a>
+    </div>
+
+  </div>
+</div>
+{% endif %}

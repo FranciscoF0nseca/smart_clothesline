@@ -1,0 +1,219 @@
+{% extends "base.html" %}
+
+{% block title %}Smart Clothesline - Histórico{% endblock %}
+
+{% block content %}
+
+<header class="mb-6">
+  <h1 class="text-2xl font-semibold text-slate-900">
+    Histórico de Eventos
+  </h1>
+  <p class="text-sm text-slate-500">
+    Acompanhe todos os eventos e dados dos sensores
+  </p>
+</header>
+
+<!-- GRÁFICOS -->
+<section class="grid grid-cols-1 xl:grid-cols-2 gap-6 mb-6">
+
+  <!-- TEMPERATURA -->
+    <div class="bg-white/90 border border-slate-100 rounded-2xl shadow-lg p-6">
+      <h3 class="text-sm font-semibold text-slate-700 mb-3">
+        Temperatura (Últimas 24h)
+      </h3>
+
+    <div class="h-64">
+         <canvas id="temperatureChart"></canvas>
+    </div>
+    </div>
+  <!-- HUMIDADE & VENTO -->
+    <div class="bg-white/90 border border-slate-100 rounded-2xl shadow-lg p-6">
+      <h3 class="text-sm font-semibold text-slate-700 mb-3">
+        Humidade (Últimas 24h)
+      </h3>
+
+    <div class="h-64">
+        <canvas id="humidityChart"></canvas>
+    </div>
+    </div>
+
+</section>
+
+<!-- EVENTOS -->
+<section class="bg-white/90 border border-slate-100 rounded-2xl shadow-lg p-6 space-y-4">
+
+  <div class="flex items-center justify-between">
+    <h3 class="text-lg font-semibold text-slate-900">
+      Eventos Recentes
+    </h3>
+
+    <div class="flex gap-2">
+      <select class="rounded-xl border border-slate-300 text-sm px-3 py-1.5">
+        <option>Hoje</option>
+        <option>Últimos 7 dias</option>
+        <option>Últimos 30 dias</option>
+      </select>
+
+      <select class="rounded-xl border border-slate-300 text-sm px-3 py-1.5">
+        <option>Todos os tipos</option>
+        <option>Chuva</option>
+        <option>Abertura</option>
+        <option>Fecho</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="overflow-x-auto">
+    <table class="w-full text-sm">
+      <thead class="text-slate-500 border-b">
+        <tr>
+          <th class="py-2 text-left">Data</th>
+          <th class="text-left">Hora</th>
+          <th class="text-left">Tipo</th>
+          <th class="text-left">Descrição</th>
+        </tr>
+      </thead>
+
+      <tbody class="divide-y">
+
+        {% if alerts %}
+          {% for alert in alerts %}
+            <tr>
+              <td class="py-2">
+                {{ alert.datetime|date:"d/m" }}
+              </td>
+              <td>
+                {{ alert.datetime|date:"H:i" }}
+              </td>
+              <td>
+                {% if alert.alert_type == "rain" %}
+                  <span class="px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 text-xs">
+                    Chuva
+                  </span>
+                {% elif alert.alert_type == "manual" %}
+                  <span class="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 text-xs">
+                    Manual
+                  </span>
+                {% else %}
+                  <span class="px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 text-xs">
+                    Sistema
+                  </span>
+                {% endif %}
+              </td>
+              <td>
+                {{ alert.message }}
+              </td>
+            </tr>
+          {% endfor %}
+        {% else %}
+          <tr>
+            <td colspan="4" class="py-6 text-center text-slate-400">
+              Nenhum evento registado.
+            </td>
+          </tr>
+        {% endif %}
+
+      </tbody>
+    </table>
+  </div>
+</section>
+{{ sensors|json_script:"sensor-data" }}
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+
+  const rawData = JSON.parse(
+    document.getElementById("sensor-data").textContent
+  );
+
+  if (!rawData.length) {
+    console.warn("Sem dados de sensores");
+    return;
+  }
+
+  const labels = rawData.map(s =>
+    new Date(s.datetime).toLocaleTimeString("pt-PT", {
+      hour: "2-digit",
+      minute: "2-digit"
+    })
+  );
+
+  /* ---------- TEMPERATURA ---------- */
+  const tempData = rawData.map(s => s.temperature);
+
+  const tempCtx = document
+    .getElementById("temperatureChart")
+    .getContext("2d");
+
+  new Chart(tempCtx, {
+    type: "line",
+    data: {
+      labels: labels,
+      datasets: [{
+        label: "Temperatura (°C)",
+        data: tempData,
+        borderColor: "#f97316",
+        backgroundColor: "rgba(249, 115, 22, 0.15)",
+        tension: 0.4,
+        fill: true
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false }
+      },
+      scales: {
+        y: {
+          ticks: {
+            callback: value => value + "°C"
+          }
+        }
+      }
+    }
+  });
+
+  /* ---------- HUMIDADE ---------- */
+  const humidityData = rawData.map(s => s.humidity);
+
+  const humCtx = document
+    .getElementById("humidityChart")
+    .getContext("2d");
+
+  new Chart(humCtx, {
+    type: "line",
+    data: {
+      labels: labels,
+      datasets: [{
+        label: "Humidade (%)",
+        data: humidityData,
+        borderColor: "#0ea5e9",
+        backgroundColor: "rgba(14, 165, 233, 0.15)",
+        tension: 0.4,
+        fill: true
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false }
+      },
+      scales: {
+        y: {
+          min: 0,
+          max: 100,
+          ticks: {
+            callback: value => value + "%"
+          }
+        }
+      }
+    }
+  });
+
+});
+</script>
+{% endblock %}

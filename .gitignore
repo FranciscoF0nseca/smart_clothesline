@@ -21,3 +21,6 @@ Thumbs.db
 
 # Docs temporários
 ~$*.docx
+
+# BD
+db.sqlite3
