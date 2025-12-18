@@ -1,0 +1,27 @@
+# Python / Django
+__pycache__/
+*.pyc
+.env
+.venv
+staticfiles/
+media/
+.idea
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# CAD / Mechanical
+*.blend
+*.stl
+
+# KiCad
+*-bak
+*-backups/
+*.kicad_prl
+
+# Docs temporários
+~$*.docx
