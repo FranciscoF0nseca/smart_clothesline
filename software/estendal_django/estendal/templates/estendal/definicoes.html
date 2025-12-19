@@ -104,7 +104,6 @@
             </div>
             <input
               type="checkbox"
-              {% if item.checked %}checked{% endif %}
               class="h-5 w-5 rounded border-slate-300 text-primary-600 focus:ring-primary-500">
           </div>
           {% endfor %}
@@ -130,14 +129,59 @@
 
       </div>
 
-      <!-- COLUNA DIREITA -->
-      <div class="bg-white/90 border border-slate-100 rounded-2xl shadow-lg p-6 flex flex-col items-center justify-center text-center gap-3">
-        <i data-lucide="wifi-off" class="w-10 h-10 text-slate-400"></i>
-        <p class="font-semibold">Nenhum dispositivo conectado</p>
-        <p class="text-sm text-slate-500">
-          Adicione um estendal para aceder às definições do dispositivo.
+<div class="bg-white/90 border border-slate-100 rounded-2xl shadow-lg p-6">
+
+  {% if not rack %}
+    <div class="flex flex-col items-center justify-center text-center gap-3 py-10">
+      <i data-lucide="wifi-off" class="w-10 h-10 text-slate-400"></i>
+      <p class="font-semibold">Nenhum dispositivo conectado</p>
+      <p class="text-sm text-slate-500">
+        Adicione um estendal para aceder às definições do dispositivo.
+      </p>
+    </div>
+
+  {% else %}
+    <div class="relative">
+
+      <!-- CARD -->
+      <div
+        onclick="toggleActions('{{ rack.id }}')"
+        class="cursor-pointer rounded-2xl bg-white p-6 text-center
+               shadow-md hover:shadow-lg transition"
+      >
+
+        <!-- Ícone -->
+        <div class="flex justify-center mb-4">
+          <div class="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center">
+            <i data-lucide="wifi" class="w-8 h-8 text-blue-600"></i>
+          </div>
+        </div>
+
+        <!-- Nome -->
+        <h2 class="text-lg font-semibold text-slate-800">
+          {{ rack.name|default:"Meu Estendal" }}
+        </h2>
+
+        <div class="my-4 border-t border-slate-200"></div>
+
+        <!-- Info -->
+        <p class="text-sm text-slate-600">
+          <span class="font-medium text-slate-700">Serial:</span>
+          {{ rack.serial_number }}
         </p>
+
+        <span class="inline-flex mt-2 px-3 py-1 text-xs font-medium
+                     rounded-full bg-green-100 text-green-700">
+          Online
+        </span>
+
       </div>
+      </div>
+    </div>
+
+  {% endif %}
+
+    </div>
 
     </section>
   </div>

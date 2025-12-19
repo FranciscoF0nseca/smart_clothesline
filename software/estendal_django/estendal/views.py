@@ -206,7 +206,6 @@ def definicoes(request):
         if password_alterada:
             return redirect("/logout/")
 
-        messages.success(request, "Definições atualizadas com sucesso.")
         return redirect("definicoes")
 
     return render(request, "estendal/definicoes.html", {
