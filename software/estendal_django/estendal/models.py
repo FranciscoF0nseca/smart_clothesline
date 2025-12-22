@@ -21,31 +21,41 @@ class AlertType(models.TextChoices):
 # ============================
 
 class DryingRack(models.Model):
-    name = models.CharField(max_length=100)
-    location = models.CharField(max_length=255, blank=True, null=True)
+    name = models.CharField(
+        max_length=100,
+        blank=True   # nome só após pairing
+    )
+
+    location = models.CharField(
+        max_length=255,
+        blank=True,
+        null=True
+    )
+
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         related_name="drying_racks",
-        on_delete=models.CASCADE
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True
     )
-    installation_date = models.DateTimeField(default=timezone.now)
-    active = models.BooleanField(default=True)
 
-    # 🔽 NOVOS CAMPOS
+    installation_date = models.DateTimeField(default=timezone.now)
+
+    active = models.BooleanField(
+        default=False  # só ativo após pairing
+    )
+
     serial_number = models.CharField(
         max_length=32,
-        unique=True,
-        blank=True,
-        null=True,  # deixo null=True para não rebentar com dados antigos
+        unique=True
     )
+
     pairing_code = models.CharField(
-        max_length=16,
-        blank=True,
-        null=True,
+        max_length=16
     )
 
     def __str__(self):
-        # Mostramos também o nº de série se existir
         if self.serial_number:
             return f"{self.name} ({self.serial_number})"
         return f"{self.name} ({self.location})"

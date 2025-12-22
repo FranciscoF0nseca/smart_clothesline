@@ -1,3 +1,7 @@
+/* ===============================
+   MODAIS – ADICIONAR DISPOSITIVO
+================================ */
+
 document.addEventListener("DOMContentLoaded", () => {
   const btnAdd = document.getElementById("btnAddDevice");
   const modal = document.getElementById("modal-add-device");
@@ -15,6 +19,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 });
+
 document.addEventListener("DOMContentLoaded", () => {
   const modal = document.getElementById("modal-add-device");
   const btnAdd = document.getElementById("btnAddDevice");
@@ -24,7 +29,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
   if (!modal) return;
 
-  // Abrir modal
   if (btnAdd) {
     btnAdd.addEventListener("click", () => {
       modal.classList.remove("hidden");
@@ -33,23 +37,18 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // Fechar modal (Cancelar)
   btnCancel.addEventListener("click", () => {
     modal.classList.add("hidden");
     modal.classList.remove("flex");
   });
 
-  // Submeter pairing
   btnConfirm.addEventListener("click", async () => {
     errorBox.classList.add("hidden");
 
     const name = document.getElementById("deviceName").value.trim();
     const pairingCode = document.getElementById("pairingCode").value.trim();
-    const serialNumber = document
-      .getElementById("serialNumberPreview")
-      .value
-      .trim();
-
+    const serialNumber = document.getElementById("serialNumberPreview").value.trim();
+    const location = document.getElementById("local").value.trim();
 
     if (!pairingCode || !serialNumber) {
       showError("Código de emparelhamento inválido.");
@@ -67,7 +66,7 @@ document.addEventListener("DOMContentLoaded", () => {
           serial_number: serialNumber,
           pairing_code: pairingCode,
           name: name,
-          location: "",
+          location: location,
         }),
       });
 
@@ -78,10 +77,9 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
       }
 
-      // Sucesso → recarrega dashboard
       window.location.reload();
 
-    } catch (err) {
+    } catch {
       showError("Erro de comunicação com o servidor.");
     }
   });
@@ -94,9 +92,15 @@ document.addEventListener("DOMContentLoaded", () => {
   function getCSRFToken() {
     return document
       .querySelector('meta[name="csrf-token"]')
-      .getAttribute("content");
+      ?.getAttribute("content");
   }
 });
+
+
+/* ===============================
+   CONTROLO DO ESTENDAL
+================================ */
+
 document.addEventListener("DOMContentLoaded", () => {
   const btnOpen = document.getElementById("btn-open");
   const btnClose = document.getElementById("btn-close");
@@ -109,7 +113,6 @@ document.addEventListener("DOMContentLoaded", () => {
   btnClose.addEventListener("click", () => sendControl("close"));
 
   async function sendControl(action) {
-    // feedback imediato
     btnOpen.disabled = true;
     btnClose.disabled = true;
     statusText.innerText = "A atualizar...";
@@ -127,14 +130,13 @@ document.addEventListener("DOMContentLoaded", () => {
       const data = await response.json();
 
       if (!response.ok || !data.ok) {
-        throw new Error(data.error || "Erro ao controlar estendal");
+        throw new Error();
       }
 
       applyState(data.state);
 
-    } catch (err) {
+    } catch {
       statusText.innerText = "Erro de comunicação";
-      console.error(err);
     } finally {
       btnOpen.disabled = false;
       btnClose.disabled = false;
@@ -158,9 +160,14 @@ document.addEventListener("DOMContentLoaded", () => {
   function getCSRFToken() {
     return document
       .querySelector('meta[name="csrf-token"]')
-      .getAttribute("content");
+      ?.getAttribute("content");
   }
 });
+
+
+/* ===============================
+   METEOROLOGIA – IPMA
+================================ */
 
 document.addEventListener("DOMContentLoaded", () => {
 
@@ -185,6 +192,7 @@ document.addEventListener("DOMContentLoaded", () => {
     5: "Tempestade",
   };
 
+  /* Widget meteorológica (cidade selecionada) */
   async function loadWeather(cityName) {
     const cityId = IPMA_CITIES[cityName];
     if (!cityId) return;
@@ -196,21 +204,12 @@ document.addEventListener("DOMContentLoaded", () => {
       const data = await res.json();
       const today = data.data[0];
 
-      document.getElementById("weather-temp").innerText =
-        `${today.tMax}°C`;
-
-      document.getElementById("weather-precip").innerText =
-        `${today.precipitaProb}%`;
-
+      document.getElementById("weather-temp").innerText = `${today.tMax}°C`;
+      document.getElementById("weather-precip").innerText = `${today.precipitaProb}%`;
       document.getElementById("weather-wind").innerText =
         windMap[today.classWindSpeed] || "—";
-
-      document.getElementById("weather-wind-estendal").innerText =
-        windMap[today.classWindSpeed] || "—";
-
       document.getElementById("weather-condition").innerText =
         today.predWindDir || "—";
-
       document.getElementById("weather-city-label").innerText =
         `${cityName}, Portugal`;
 
@@ -219,19 +218,45 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
+  /* Vento fixo do estendal – SEMPRE VISEU */
+  async function loadEstendalWind() {
+    const VISEU_ID = 1182300;
+
+    try {
+      const res = await fetch(
+        `https://api.ipma.pt/open-data/forecast/meteorology/cities/daily/${VISEU_ID}.json`
+      );
+      const data = await res.json();
+      const today = data.data[0];
+
+      document.getElementById("weather-wind-estendal").innerText =
+        windMap[today.classWindSpeed] || "—";
+
+    } catch (err) {
+      console.error("Erro IPMA (Viseu):", err);
+      document.getElementById("weather-wind-estendal").innerText = "—";
+    }
+  }
+
   const citySelect = document.getElementById("weather-city-select");
 
   if (citySelect) {
     loadWeather(citySelect.value);
-
     citySelect.addEventListener("change", () => {
       loadWeather(citySelect.value);
     });
   }
 
-  // Inicializar ícones
+  loadEstendalWind();
+  setInterval(loadEstendalWind, 10 * 60 * 1000);
+
   lucide.createIcons();
 });
+
+
+/* ===============================
+   MODAL METEOROLOGIA
+================================ */
 
 const expandBtn = document.getElementById("weather-expand-btn");
 const weatherModal = document.getElementById("modal-weather");
@@ -243,6 +268,11 @@ if (expandBtn && weatherModal) {
   });
 }
 
+
+/* ===============================
+   MODAL DISPOSITIVO
+================================ */
+
 document.addEventListener("DOMContentLoaded", () => {
   const openBtn = document.querySelector("[data-open-device-modal]");
   const modal = document.getElementById("device-modal");
@@ -250,10 +280,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   if (!openBtn || !modal) return;
 
-  // NÃO abrir o modal na página Definições
-  if (window.location.pathname.startsWith("/definicoes")) {
-    return;
-  }
+  if (window.location.pathname.startsWith("/definicoes")) return;
 
   const openModal = () => {
     modal.classList.remove("hidden");
@@ -268,14 +295,58 @@ document.addEventListener("DOMContentLoaded", () => {
   openBtn.addEventListener("click", openModal);
   closeBtn?.addEventListener("click", closeModal);
 
-  // Clicar fora fecha
-  modal.addEventListener("click", (e) => {
+  modal.addEventListener("click", e => {
     if (e.target === modal) closeModal();
   });
 
-  // ESC fecha
-  document.addEventListener("keydown", (e) => {
+  document.addEventListener("keydown", e => {
     if (e.key === "Escape") closeModal();
   });
 });
 
+document.addEventListener("DOMContentLoaded", () => {
+  const card = document.getElementById("dryingrack-card");
+  const modal = document.getElementById("modal-deactivate");
+  const cancelBtn = document.getElementById("cancel-deactivate");
+  const confirmBtn = document.getElementById("confirm-deactivate");
+
+  if (!card || !modal) {
+    console.warn("Card ou modal não encontrado");
+    return;
+  }
+
+  card.addEventListener("click", () => {
+    modal.classList.remove("hidden");
+    modal.classList.add("flex");
+  });
+
+  cancelBtn?.addEventListener("click", () => {
+    modal.classList.add("hidden");
+    modal.classList.remove("flex");
+  });
+
+  confirmBtn?.addEventListener("click", async () => {
+    const res = await fetch("/api/dryingrack/deactivate/", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRFToken": getCSRFToken(),
+      },
+      body: JSON.stringify({ id: DRYINGRACK_ID }),
+    });
+
+    const data = await res.json();
+
+    if (data.ok) {
+      window.location.reload();
+    } else {
+      alert(data.error || "Erro ao desativar estendal");
+    }
+  });
+});
+
+function getCSRFToken() {
+  return document
+    .querySelector('meta[name="csrf-token"]')
+    ?.getAttribute("content");
+}

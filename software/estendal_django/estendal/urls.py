@@ -15,6 +15,7 @@ urlpatterns = [
     path("api/sensors/", ingest_sensor, name="api_sensors"),
     path("api/pair/", pair_drying_rack, name="api_pair"),
     path("api/control/", control_clothesline, name="control_drying"),
+    path("api/dryingrack/deactivate/", views.deactivate_dryingrack),
 
     # Reset Password (Django)
     path(
