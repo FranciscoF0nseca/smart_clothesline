@@ -21,7 +21,6 @@ services:
   db:
     image: postgres:16
     container_name: clothesline_db
-    restart: always
     ports:
       - "5432:5432"
     environment:
@@ -31,5 +30,15 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
+  ngrok:
+    image: ngrok/ngrok:latest
+    container_name: clothesline_ngrok
+    command: http django:8000
+    environment:
+      NGROK_AUTHTOKEN: ${NGROK_AUTHTOKEN}
+    depends_on:
+      - django
+    ports:
+      - "4040:4040"
 volumes:
   postgres_data:

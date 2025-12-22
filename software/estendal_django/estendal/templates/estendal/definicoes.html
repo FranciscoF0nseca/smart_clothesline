@@ -141,50 +141,40 @@
     </div>
 
   {% else %}
-    <div class="relative">
+        <div id="dryingrack-card"
+             class="cursor-pointer bg-white rounded-2xl shadow-lg p-6 hover:ring-2 hover:ring-blue-400 transition">
 
-      <!-- CARD -->
-      <div
-        onclick="toggleActions('{{ rack.id }}')"
-        class="cursor-pointer rounded-2xl bg-white p-6 text-center
-               shadow-md hover:shadow-lg transition"
-      >
+          <div class="flex flex-col items-center gap-3">
+            <div class="h-14 w-14 rounded-full bg-blue-100 flex items-center justify-center">
+              <i data-lucide="wifi" class="w-7 h-7 text-blue-600"></i>
+            </div>
 
-        <!-- Ícone -->
-        <div class="flex justify-center mb-4">
-          <div class="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center">
-            <i data-lucide="wifi" class="w-8 h-8 text-blue-600"></i>
+            <p class="text-lg font-semibold text-slate-900">
+              {{ rack.name }}
+            </p>
+
+            <p class="text-sm text-slate-500">
+              Serial: {{ rack.serial_number }}
+            </p>
+
+            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full
+                         text-xs font-medium bg-emerald-100 text-emerald-700">
+              Online
+            </span>
           </div>
         </div>
 
-        <!-- Nome -->
-        <h2 class="text-lg font-semibold text-slate-800">
-          {{ rack.name|default:"Meu Estendal" }}
-        </h2>
-
-        <div class="my-4 border-t border-slate-200"></div>
-
-        <!-- Info -->
-        <p class="text-sm text-slate-600">
-          <span class="font-medium text-slate-700">Serial:</span>
-          {{ rack.serial_number }}
-        </p>
-
-        <span class="inline-flex mt-2 px-3 py-1 text-xs font-medium
-                     rounded-full bg-green-100 text-green-700">
-          Online
-        </span>
-
-      </div>
-      </div>
     </div>
 
   {% endif %}
 
-    </div>
+  </div>
 
     </section>
   </div>
 </main>
+<script>
+  const DRYINGRACK_ID = "{{ rack.id }}";
+</script>
 
 {% endblock %}

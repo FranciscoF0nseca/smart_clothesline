@@ -2,13 +2,15 @@ from django.contrib.auth.models import User
 from django.http import HttpResponseRedirect
 from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login as logar, logout as sair
-from django.contrib.auth.decorators import login_required
 from .models import DryingRack, Sensor, Alert
 import re
 from django.views.decorators.http import require_POST
 from datetime import timedelta
 from django.utils import timezone
 from django.contrib.auth.decorators import login_required
+from django.views.decorators.csrf import csrf_protect
+import json
+from django.http import JsonResponse
 
 def home(request):
     return render(request, "estendal/index.html")
@@ -143,16 +145,6 @@ def definicoes(request):
             "desc": "Gestão automática baseada nas condições meteorológicas",
             "checked": True,
         },
-        {
-            "label": "Fechar com Chuva",
-            "desc": "Fecha automaticamente quando a chuva é detetada",
-            "checked": True,
-        },
-        {
-            "label": "Fechar com Vento Forte",
-            "desc": "Fecha quando o vento excede 30 km/h",
-            "checked": True,
-        },
     ]
 
     sensors = []
@@ -270,3 +262,36 @@ def remover_estendal(request):
         rack.save()
 
     return redirect("definicoes")
+
+@require_POST
+@csrf_protect
+@login_required
+def deactivate_dryingrack(request):
+    data = json.loads(request.body)
+    rack_id = data.get("id")
+
+    if not rack_id:
+        return JsonResponse(
+            {"ok": False, "error": "ID em falta"},
+            status=400
+        )
+
+    try:
+        rack = DryingRack.objects.get(id=rack_id)
+    except DryingRack.DoesNotExist:
+        return JsonResponse(
+            {"ok": False, "error": "Estendal não encontrado"},
+            status=404
+        )
+
+    if rack.user != request.user:
+        return JsonResponse(
+            {"ok": False, "error": "Sem permissões"},
+            status=403
+        )
+
+    rack.active = False
+    rack.user = None
+    rack.save()
+
+    return JsonResponse({"ok": True})
