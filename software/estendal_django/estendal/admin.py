@@ -4,9 +4,10 @@ from .models import DryingRack, Sensor, Alert
 
 @admin.register(DryingRack)
 class DryingRackAdmin(admin.ModelAdmin):
-    list_display = ("id", "name", "location", "user", "active", "installation_date")
+    list_display = ("id", "name", "location", "user", "active", "installation_date", "clothesline_state",)
     list_filter = ("active",)
-    search_fields = ("name", "location")
+    search_fields = ("name", "location"),
+
 
 
 @admin.register(Sensor)
@@ -19,9 +20,8 @@ class SensorAdmin(admin.ModelAdmin):
         "humidity",
         "light_level",
         "rain",
-        "clothesline_state",
     )
-    list_filter = ("rain", "clothesline_state")
+    list_filter = ("rain", "drying_rack")
     search_fields = ("drying_rack__name",)
 
 

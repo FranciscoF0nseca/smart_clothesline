@@ -3,7 +3,7 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 
-from estendal.models import DryingRack, Sensor, ClotheslineState
+from estendal.models import DryingRack, Sensor, Alert
 
 
 @csrf_exempt
@@ -30,11 +30,16 @@ def ingest_sensor(request):
         light_level=data.get("light_level"),
         rain=data.get("rain", False),
         drying_time_estimate=data.get("drying_time_estimate"),
-        clothesline_state=data.get(
-            "clothesline_state",
-            ClotheslineState.EXTENDED,
-        ),
     )
+
+    # -------- ALERTA DE CHUVA --------
+    if sensor.rain:
+        Alert.objects.create(
+            drying_rack=rack,
+            alert_type="rain",
+            message="Chuva detetada pelo sensor físico do estendal."
+        )
+    # --------------------------------
 
     return JsonResponse(
         {

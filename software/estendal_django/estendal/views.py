@@ -25,6 +25,7 @@ def dashboard(request):
         .first()
     )
 
+    laststate = None
     sensor = None
     if rack:
 
@@ -34,6 +35,8 @@ def dashboard(request):
             .order_by("-datetime")
             .first()
         )
+
+        laststate = rack.clothesline_state
 
 
     last_alert = (
@@ -47,6 +50,7 @@ def dashboard(request):
         "rack": rack,
         "sensor": sensor,
         "last_alert": last_alert,
+        "clothesline_state": laststate,
     }
     return render(request, "estendal/dashboard.html", context)
 
@@ -262,36 +266,3 @@ def remover_estendal(request):
         rack.save()
 
     return redirect("definicoes")
-
-@require_POST
-@csrf_protect
-@login_required
-def deactivate_dryingrack(request):
-    data = json.loads(request.body)
-    rack_id = data.get("id")
-
-    if not rack_id:
-        return JsonResponse(
-            {"ok": False, "error": "ID em falta"},
-            status=400
-        )
-
-    try:
-        rack = DryingRack.objects.get(id=rack_id)
-    except DryingRack.DoesNotExist:
-        return JsonResponse(
-            {"ok": False, "error": "Estendal não encontrado"},
-            status=404
-        )
-
-    if rack.user != request.user:
-        return JsonResponse(
-            {"ok": False, "error": "Sem permissões"},
-            status=403
-        )
-
-    rack.active = False
-    rack.user = None
-    rack.save()
-
-    return JsonResponse({"ok": True})

@@ -51,9 +51,10 @@
 
 </div>
 {% endblock %}
-
+<script>window.CURRENT_SERIAL = "{{ drying_rack.serial_number|escapejs }}";";</script>
 <script src="{% static 'app/script.js' %}"></script>
 <script>lucide.createIcons();</script>
+
 {% block extra_js %}{% endblock %}
 
 {% block page_modals %}

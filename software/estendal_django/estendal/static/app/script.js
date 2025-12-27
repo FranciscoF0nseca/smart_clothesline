@@ -2,6 +2,8 @@
    MODAIS – ADICIONAR DISPOSITIVO
 ================================ */
 
+const CURRENT_SERIAL = window.CURRENT_SERIAL || "SCL-1234";
+
 document.addEventListener("DOMContentLoaded", () => {
   const btnAdd = document.getElementById("btnAddDevice");
   const modal = document.getElementById("modal-add-device");
@@ -112,36 +114,40 @@ document.addEventListener("DOMContentLoaded", () => {
   btnOpen.addEventListener("click", () => sendControl("open"));
   btnClose.addEventListener("click", () => sendControl("close"));
 
-  async function sendControl(action) {
-    btnOpen.disabled = true;
-    btnClose.disabled = true;
-    statusText.innerText = "A atualizar...";
+    async function sendControl(action) {
+      btnOpen.disabled = true;
+      btnClose.disabled = true;
+      statusText.innerText = "A atualizar...";
 
-    try {
-      const response = await fetch("/api/control/", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-CSRFToken": getCSRFToken(),
-        },
-        body: JSON.stringify({ action }),
-      });
+      try {
+        const response = await fetch("/api/control/", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": getCSRFToken(),
+          },
+          body: JSON.stringify({
+            serial_number: CURRENT_SERIAL,
+            action: action
+          }),
+        });
 
-      const data = await response.json();
+        const data = await response.json();
 
-      if (!response.ok || !data.ok) {
-        throw new Error();
+        if (!response.ok || !data.ok) {
+          throw new Error(data.error);
+        }
+
+        applyState(data.state);
+
+      } catch (err) {
+        statusText.innerText = "Erro de comunicação";
+        console.error(err);
+      } finally {
+        btnOpen.disabled = false;
+        btnClose.disabled = false;
       }
-
-      applyState(data.state);
-
-    } catch {
-      statusText.innerText = "Erro de comunicação";
-    } finally {
-      btnOpen.disabled = false;
-      btnClose.disabled = false;
     }
-  }
 
   function applyState(state) {
     if (state === "extended") {
@@ -350,3 +356,26 @@ function getCSRFToken() {
     .querySelector('meta[name="csrf-token"]')
     ?.getAttribute("content");
 }
+
+async function refreshClotheslineState() {
+  try {
+    const res = await fetch(
+      `/api/device/state/?serial_number=${CURRENT_SERIAL}`
+    );
+    const data = await res.json();
+
+    if (!data.ok) return;
+
+    applyState(data.clothesline_state);
+
+    const autoToggle = document.getElementById("auto-toggle");
+    if (autoToggle) {
+      autoToggle.checked = data.automatic;
+    }
+
+  } catch (err) {
+    console.error("Erro ao ler estado:", err);
+  }
+}
+
+
