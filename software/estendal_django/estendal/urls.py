@@ -4,6 +4,8 @@ from django.contrib.auth import views as auth_views
 from estendal.api.sensors import ingest_sensor
 from estendal.api.pairing import pair_drying_rack
 from estendal.api.control import control_clothesline
+from estendal.api.device_state import device_state
+
 urlpatterns = [
     path('', views.dashboard, name='home'),
     path('definicoes/', views.definicoes, name='definicoes'),
@@ -15,9 +17,8 @@ urlpatterns = [
     path("api/sensors/", ingest_sensor, name="api_sensors"),
     path("api/pair/", pair_drying_rack, name="api_pair"),
     path("api/control/", control_clothesline, name="control_drying"),
-    path("api/dryingrack/deactivate/", views.deactivate_dryingrack),
+    path("api/device/state/", device_state, name="device_state"),
 
-    # Reset Password (Django)
     path(
         "password_reset/",
         auth_views.PasswordResetView.as_view(
@@ -26,7 +27,6 @@ urlpatterns = [
         name="password_reset",
     ),
 
-    # PÁGINA DE CONFIRMAÇÃO DO PEDIDO
     path(
         "password_reset/done/",
         auth_views.PasswordResetDoneView.as_view(
@@ -35,7 +35,6 @@ urlpatterns = [
         name="password_reset_done",
     ),
 
-    # LINK QUE VEM NO EMAIL (USA O PADRÃO POR DEFEITO DO DJANGO!)
     path(
         "reset/<uidb64>/<token>/",
         auth_views.PasswordResetConfirmView.as_view(
@@ -44,7 +43,6 @@ urlpatterns = [
         name="password_reset_confirm",
     ),
 
-    # PÁGINA FINAL, PASSWORD ALTERADA
     path(
         "reset/done/",
         auth_views.PasswordResetCompleteView.as_view(
@@ -52,7 +50,5 @@ urlpatterns = [
         ),
         name="password_reset_complete",
     ),
-
-    path("estendal/remover/", views.remover_estendal, name="remove_estendal"),
 
 ]

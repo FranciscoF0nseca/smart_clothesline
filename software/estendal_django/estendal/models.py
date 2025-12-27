@@ -55,6 +55,12 @@ class DryingRack(models.Model):
         max_length=16
     )
 
+    clothesline_state = models.CharField(
+        max_length=20,
+        choices=[("extended", "Aberto"), ("retracted", "Fechado")],
+        default="retracted"
+    )
+
     def __str__(self):
         if self.serial_number:
             return f"{self.name} ({self.serial_number})"
@@ -76,12 +82,6 @@ class Sensor(models.Model):
 
 
     drying_time_estimate = models.IntegerField(null=True, blank=True)
-
-    clothesline_state = models.CharField(
-        max_length=20,
-        choices=ClotheslineState.choices,
-        default=ClotheslineState.EXTENDED,
-    )
 
     def __str__(self):
         return f"Sensor {self.id} - {self.datetime}"

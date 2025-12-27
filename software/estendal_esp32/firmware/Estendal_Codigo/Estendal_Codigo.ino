@@ -3,24 +3,27 @@
 #include <DHT.h>
 #include <ESP32Servo.h>
 
-/* =========================================================
-   CONFIGURAÇÃO
-   ========================================================= */
+/* =====================================================
+   CONFIGURAÇÃO GERAL
+   ===================================================== */
 
 // ---- WiFi ----
-const char* ssid = "Vodafone-8C8BB5"; 
+const char* ssid = "Vodafone-8C8BB5";
 const char* password = "d9Y4495wJw";
 
-// ---- API ----
+// ---- APIs ----
 const char* apiSensors =
   "https://hattie-erosional-unobesely.ngrok-free.dev/api/sensors/";
 
-// ---- Identificação do estendal ----
+const char* apiState =
+  "https://hattie-erosional-unobesely.ngrok-free.dev/api/device/state/?serial_number=SCL-1234";
+
+// ---- Identificação ----
 #define SERIAL_NUMBER "SCL-1234"
 
-/* =========================================================
+/* =====================================================
    SENSORES
-   ========================================================= */
+   ===================================================== */
 
 // ---- DHT11 ----
 #define DHTPIN 22
@@ -28,61 +31,70 @@ const char* apiSensors =
 DHT dht(DHTPIN, DHTTYPE);
 
 // ---- LDR ----
-#define LDR_PIN 34   // ADC1
+#define LDR_PIN 34
 
 // ---- Sensor de chuva ----
-#define CHUVA_PIN 36 // ADC1
+#define CHUVA_PIN 36
 #define CHUVA_THRESHOLD 1500
+#define CHUVA_DETETA(v) ((v) >= CHUVA_THRESHOLD)
 
-/* =========================================================
+/* =====================================================
    SERVOS (CALIBRADOS)
-   ========================================================= */
+   ===================================================== */
 
 #define SERVO1_PIN 14
 #define SERVO2_PIN 27
 
-// Servo 1
-#define SERVO1_ABERTO   20
-#define SERVO1_FECHADO  160
+#define SERVO1_ABERTO   70
+#define SERVO1_FECHADO  3
 
-// Servo 2
-#define SERVO2_ABERTO   160
-#define SERVO2_FECHADO  20
+#define SERVO2_ABERTO   230
+#define SERVO2_FECHADO  120
 
 Servo servo1;
 Servo servo2;
 
-/* =========================================================
-   REGRAS AUTOMÁTICAS
-   ========================================================= */
+/* =====================================================
+   ESTADO DO ESTENDAL
+   ===================================================== */
 
-#define LUZ_ABRIR    50   // %
-#define LUZ_FECHAR   40   // %
-#define HUMIDADE_MAX 85   // %
+enum EstadoEstendal { ABERTO, FECHADO };
 
-enum EstadoEstendal {
-  ABERTO,
-  FECHADO
-};
-
-EstadoEstendal estadoAtual   = FECHADO;
+EstadoEstendal estadoAtual    = FECHADO;
 EstadoEstendal estadoDesejado = FECHADO;
 
-/* =========================================================
-   MODOS (PREPARADO PARA BACKEND)
-   ========================================================= */
+/* =====================================================
+   OVERRIDE MANUAL (BOTÕES)
+   ===================================================== */
 
-bool automaticMode = true;          // virá do Django
-String manualCommand = "NONE";      // OPEN | CLOSE | NONE
+String backendState = "retracted";   // extended | retracted
 
-/* =========================================================
-   FUNÇÕES AUXILIARES
-   ========================================================= */
+bool overrideAtivo = false;
+EstadoEstendal overrideEstado = FECHADO;
+unsigned long overrideAteMs = 0;
+
+// tempo do override (ex: 2 minutos)
+const unsigned long OVERRIDE_TTL_MS = 2UL * 60UL * 1000UL;
+
+/* =====================================================
+   LIMIARES AUTOMÁTICOS
+   ===================================================== */
+
+#define LUZ_ABRIR   50
+#define LUZ_FECHAR  40   // histerese
+
+/* =====================================================
+   ADC
+   ===================================================== */
 
 void setupADC() {
   analogReadResolution(12);
   analogSetAttenuation(ADC_11db);
 }
+
+/* =====================================================
+   WIFI
+   ===================================================== */
 
 void connectWiFi() {
   WiFi.begin(ssid, password);
@@ -97,17 +109,17 @@ void connectWiFi() {
   Serial.println(WiFi.localIP());
 }
 
-/* =========================================================
+/* =====================================================
    CONTROLO DOS SERVOS
-   ========================================================= */
+   ===================================================== */
 
 void abrirEstendal() {
   if (estadoAtual == ABERTO) return;
 
   servo1.write(SERVO1_ABERTO);
   servo2.write(SERVO2_ABERTO);
-  estadoAtual = ABERTO;
 
+  estadoAtual = ABERTO;
   Serial.println(">> ESTENDAL ABERTO");
 }
 
@@ -116,54 +128,117 @@ void fecharEstendal() {
 
   servo1.write(SERVO1_FECHADO);
   servo2.write(SERVO2_FECHADO);
-  estadoAtual = FECHADO;
 
+  estadoAtual = FECHADO;
   Serial.println(">> ESTENDAL FECHADO");
 }
 
 void aplicarEstado() {
-  if (estadoDesejado == ABERTO) {
-    abrirEstendal();
-  } else {
-    fecharEstendal();
-  }
+  if (estadoDesejado == ABERTO) abrirEstendal();
+  else fecharEstendal();
 }
 
-/* =========================================================
+/* =====================================================
+   LEITURA DO BACKEND (BOTÕES)
+   ===================================================== */
+
+void lerEstadoDoBackend() {
+  if (WiFi.status() != WL_CONNECTED) return;
+
+  HTTPClient http;
+  http.begin(apiState);
+
+  int code = http.GET();
+  if (code == 200) {
+    String body = http.getString();
+
+    String novoEstado = backendState;
+
+    if (body.indexOf("extended") >= 0) novoEstado = "extended";
+    else if (body.indexOf("retracted") >= 0) novoEstado = "retracted";
+
+    // Se o utilizador clicou num botão
+    if (novoEstado != backendState) {
+      backendState = novoEstado;
+
+      overrideAtivo = true;
+      overrideEstado = (backendState == "extended") ? ABERTO : FECHADO;
+      overrideAteMs = millis() + OVERRIDE_TTL_MS;
+
+      Serial.println(">> OVERRIDE MANUAL ATIVADO");
+    }
+  }
+
+  http.end();
+}
+
+/* =====================================================
    LÓGICA DE DECISÃO
-   ========================================================= */
+   ===================================================== */
 
-void decidirEstado(bool rain, int lightLevel, float humidity) {
+void decidirEstado(bool rain, int lightLevel) {
 
-  // Fechar sempre com chuva
+  // PRIORIDADE 1 — chuva física
   if (rain) {
     estadoDesejado = FECHADO;
     return;
   }
 
-  // Manual
-  if (manualCommand == "OPEN") {
+  // Verificar se override expirou
+  if (overrideAtivo && (long)(millis() - overrideAteMs) >= 0) {
+    overrideAtivo = false;
+    Serial.println(">> OVERRIDE EXPIRADO, VOLTAR AO AUTOMÁTICO");
+  }
+
+  // PRIORIDADE 2 — override manual
+  if (overrideAtivo) {
+    estadoDesejado = overrideEstado;
+    return;
+  }
+
+  // PRIORIDADE 3 — automático (sempre ON)
+  if (estadoAtual == FECHADO && lightLevel >= LUZ_ABRIR) {
     estadoDesejado = ABERTO;
     return;
   }
-  if (manualCommand == "CLOSE") {
+
+  if (estadoAtual == ABERTO && lightLevel <= LUZ_FECHAR) {
     estadoDesejado = FECHADO;
     return;
   }
 
-  // Automático 
-  if (automaticMode) {
-    if (estadoAtual == FECHADO) {
-      if (lightLevel >= LUZ_ABRIR && humidity < HUMIDADE_MAX) {
-        estadoDesejado = ABERTO;
-      }
-    } else { // ABERTO
-      if (lightLevel <= LUZ_FECHAR || humidity >= HUMIDADE_MAX) {
-        estadoDesejado = FECHADO;
-      }
-    }
-  }
+  estadoDesejado = estadoAtual;
 }
+
+/* =====================================================
+   ENVIO DE SENSORES
+   ===================================================== */
+
+void enviarSensores(float temp, float hum, int lightLevel, bool rain) {
+  if (WiFi.status() != WL_CONNECTED) return;
+
+  HTTPClient http;
+  http.begin(apiSensors);
+  http.addHeader("Content-Type", "application/json");
+
+  String payload = "{";
+  payload += "\"serial_number\":\"" SERIAL_NUMBER "\",";
+  payload += "\"temperature\":" + String(temp, 1) + ",";
+  payload += "\"humidity\":" + String(hum, 1) + ",";
+  payload += "\"light_level\":" + String(lightLevel) + ",";
+  payload += "\"rain\":" + String(rain ? "true" : "false");
+  payload += "}";
+
+  int code = http.POST(payload);
+  Serial.print("POST sensores HTTP: ");
+  Serial.println(code);
+
+  http.end();
+}
+
+/* =====================================================
+   SETUP
+   ===================================================== */
 
 void setup() {
   Serial.begin(115200);
@@ -175,35 +250,45 @@ void setup() {
   servo1.attach(SERVO1_PIN, 500, 2500);
   servo2.attach(SERVO2_PIN, 500, 2500);
 
-  // Estado seguro inicial
   fecharEstendal();
-  estadoDesejado = FECHADO;
 
   connectWiFi();
 
-  Serial.println("Estendal iniciado (automático + manual)");
+  Serial.println("=== ESTENDAL INICIADO ===");
 }
+
+/* =====================================================
+   LOOP
+   ===================================================== */
 
 void loop() {
 
-  // ---- Leitura sensores ----
-  float temperature = dht.readTemperature();
-  float humidity = dht.readHumidity();
+  // 1) Ler backend (botões)
+  lerEstadoDoBackend();
 
-  if (isnan(temperature) || isnan(humidity)) {
-    Serial.println("Erro ao ler DHT11");
-    delay(2000);
-    return;
-  }
+  // 2) Ler sensores
+  float temperature = dht.readTemperature();
+  float humidity    = dht.readHumidity();
 
   int ldrRaw = analogRead(LDR_PIN);
   int lightLevel = map(ldrRaw, 0, 4095, 0, 100);
   lightLevel = constrain(lightLevel, 0, 100);
 
   int chuvaRaw = analogRead(CHUVA_PIN);
-  bool rain = (chuvaRaw >= CHUVA_THRESHOLD);
+  bool rain = CHUVA_DETETA(chuvaRaw);
 
-  // ---- Debug ----
+  // 3) Decidir e aplicar
+  decidirEstado(rain, lightLevel);
+  aplicarEstado();
+
+  // 4) Enviar sensores
+  if (!isnan(temperature) && !isnan(humidity)) {
+    enviarSensores(temperature, humidity, lightLevel, rain);
+  } else {
+    Serial.println("Erro ao ler DHT11");
+  }
+
+  // 5) DEBUG
   Serial.println("---- SENSORES ----");
   Serial.print("Temp: "); Serial.print(temperature); Serial.println(" °C");
   Serial.print("Hum: "); Serial.print(humidity); Serial.println(" %");
@@ -211,30 +296,10 @@ void loop() {
   Serial.print("Chuva: "); Serial.print(chuvaRaw);
   Serial.print(" -> "); Serial.println(rain ? "CHUVA" : "SECO");
 
-  // ---- Decisão + execução ----
-  decidirEstado(rain, lightLevel, humidity);
-  aplicarEstado();
+  Serial.print("Override: "); Serial.println(overrideAtivo ? "ON" : "OFF");
+  Serial.print("Estado atual: ");
+  Serial.println(estadoAtual == ABERTO ? "ABERTO" : "FECHADO");
+  Serial.println();
 
-  // ---- Envio para backend ----
-  if (WiFi.status() == WL_CONNECTED) {
-    HTTPClient http;
-    http.begin(apiSensors);
-    http.addHeader("Content-Type", "application/json");
-
-    String payload = "{";
-    payload += "\"serial_number\":\"" SERIAL_NUMBER "\",";
-    payload += "\"temperature\":" + String(temperature, 1) + ",";
-    payload += "\"humidity\":" + String(humidity, 1) + ",";
-    payload += "\"light_level\":" + String(lightLevel) + ",";
-    payload += "\"rain\":" + String(rain ? "true" : "false");
-    payload += "}";
-
-    int httpCode = http.POST(payload);
-    Serial.print("HTTP status: ");
-    Serial.println(httpCode);
-
-    http.end();
-  }
-
-  delay(30000);
+  delay(15000);
 }
