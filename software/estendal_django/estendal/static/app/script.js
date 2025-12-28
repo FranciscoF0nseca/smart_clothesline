@@ -377,5 +377,22 @@ async function refreshClotheslineState() {
     console.error("Erro ao ler estado:", err);
   }
 }
+  function handleOpenDeviceModal() {
+    // Fecha a sidebar se estiver aberta (mobile)
+    const sidebar = document.getElementById("sidebar");
+    const overlay = document.getElementById("sidebarOverlay");
 
+    if (sidebar && overlay && !overlay.classList.contains("hidden")) {
+      sidebar.classList.add("-translate-x-full");
+      overlay.classList.add("hidden");
+      document.body.classList.remove("overflow-hidden");
+    }
+
+    // Abre o modal do estendal
+    const modal = document.getElementById("device-modal");
+    if (modal) {
+      modal.classList.remove("hidden");
+      modal.classList.add("flex");
+    }
+  }
 
