@@ -23,37 +23,127 @@
     };
   </script>
   <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Icons -->
   <script src="https://unpkg.com/lucide@latest"></script>
 
   {% block extra_head %}{% endblock %}
 </head>
+
 {% include "partials/device_modal.html" %}
 
 <body class="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-cyan-50 text-slate-900">
 
 {% block page_shell %}
-<div class="min-h-screen flex">
+  <!-- Mobile Header -->
+  <header class="md:hidden flex items-center justify-between px-4 py-3 bg-white/80 backdrop-blur shadow-sm sticky top-0 z-30">
+    <button
+      type="button"
+      class="inline-flex items-center justify-center rounded-lg p-2 hover:bg-slate-100 active:bg-slate-200"
+      onclick="toggleSidebar()"
+      aria-label="Abrir menu"
+    >
+      <!-- ícone menu -->
+      <i data-lucide="menu" class="w-6 h-6"></i>
+    </button>
 
-  {% block sidebar %}
-    {% include "partials/sidebar.html" %}
-  {% endblock %}
-
-  <main class="flex-1 flex justify-center ml-72 min-h-screen ">
-    <div class="w-full max-w-[1400px] px-4 sm:px-6 lg:px-8 pt-6 pb-4 flex flex-col min-h-screen">
-
-      <div class="flex-1">
-        {% block content %}{% endblock %}
-      </div>
-
-      {% include "partials/footer.html" %}
+    <div class="font-semibold tracking-tight">
+      Smart Clothesline
     </div>
-  </main>
 
-</div>
+    <!-- Spacer para equilibrar o header -->
+    <div class="w-10"></div>
+  </header>
+
+  <div class="flex min-h-screen md:min-h-0 md:h-screen relative">
+
+    {% block sidebar %}
+      <!-- Sidebar / Drawer -->
+      <aside
+        id="sidebar"
+        class="fixed md:static inset-y-0 left-0 z-50 w-72 md:w-64 bg-white/90 backdrop-blur shadow-xl md:shadow-none
+               transform -translate-x-full md:translate-x-0
+               transition-transform duration-300 ease-in-out"
+        aria-label="Menu lateral"
+      >
+        <div class="h-full flex flex-col">
+          <!-- Mobile top inside sidebar -->
+          <div class="md:hidden flex items-center justify-between px-4 py-3 border-b">
+            <span class="font-semibold">Menu</span>
+            <button
+              type="button"
+              class="rounded-lg p-2 hover:bg-slate-100 active:bg-slate-200"
+              onclick="toggleSidebar()"
+              aria-label="Fechar menu"
+            >
+              <i data-lucide="x" class="w-6 h-6"></i>
+            </button>
+          </div>
+
+          <!-- Actual sidebar content -->
+          <div class="flex-1 overflow-y-auto">
+            {% include "partials/sidebar.html" %}
+          </div>
+        </div>
+      </aside>
+
+      <!-- Overlay (mobile) -->
+      <div
+        id="sidebarOverlay"
+        class="fixed inset-0 bg-black/40 hidden md:hidden z-40"
+        onclick="toggleSidebar()"
+        aria-hidden="true"
+      ></div>
+    {% endblock %}
+
+    <!-- Main -->
+    <main class="flex-1 w-full">
+      <div class="w-full max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-4 flex flex-col min-h-[calc(100vh-56px)] md:min-h-screen">
+        <div class="flex-1">
+          {% block content %}{% endblock %}
+        </div>
+
+        {% include "partials/footer.html" %}
+      </div>
+    </main>
+
+  </div>
 {% endblock %}
-<script>window.CURRENT_SERIAL = "{{ drying_rack.serial_number|escapejs }}";";</script>
+
+<!-- Globals -->
+<script>
+  // Corrigido: estava com aspas extra no teu código original
+  window.CURRENT_SERIAL = "{{ drying_rack.serial_number|default_if_none:''|escapejs }}";
+</script>
+
 <script src="{% static 'app/script.js' %}"></script>
-<script>lucide.createIcons();</script>
+
+<script>
+  function toggleSidebar() {
+    const sidebar = document.getElementById("sidebar");
+    const overlay = document.getElementById("sidebarOverlay");
+
+    sidebar.classList.toggle("-translate-x-full");
+    overlay.classList.toggle("hidden");
+
+    document.body.classList.toggle(
+      "overflow-hidden",
+      !overlay.classList.contains("hidden")
+    );
+  }
+
+  // Fecha sidebar ao clicar em links/botões (mobile)
+  document.addEventListener("click", function (e) {
+    const sidebar = document.getElementById("sidebar");
+    const overlay = document.getElementById("sidebarOverlay");
+    if (!sidebar || !overlay || overlay.classList.contains("hidden")) return;
+
+    const el = e.target.closest("a, button");
+    if (el && sidebar.contains(el)) {
+      toggleSidebar();
+    }
+  });
+</script>
 
 {% block extra_js %}{% endblock %}
 
