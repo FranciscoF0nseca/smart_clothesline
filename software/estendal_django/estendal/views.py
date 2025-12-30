@@ -10,7 +10,7 @@ from django.utils import timezone
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.csrf import csrf_protect
 import json
-from django.http import JsonResponse
+from django.http import JsonR0esponse
 
 def home(request):
     return render(request, "estendal/index.html")
