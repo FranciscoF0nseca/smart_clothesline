@@ -8,23 +8,18 @@
   <meta name="csrf-token" content="{{ csrf_token }}">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-  <!-- Tailwind -->
   <script>
     tailwind = {
       config: {
         theme: {
           extend: {
-            colors: {
-              primary: { 500: '#3B82F6', 600: '#2563EB', 700: '#1D4ED8' }
-            }
+            colors: { primary: { 500: '#3B82F6', 600: '#2563EB', 700: '#1D4ED8' } }
           }
         }
       }
     };
   </script>
   <script src="https://cdn.tailwindcss.com"></script>
-
-  <!-- Icons -->
   <script src="https://unpkg.com/lucide@latest"></script>
 
   {% block extra_head %}{% endblock %}
@@ -34,88 +29,71 @@
 
 <body class="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-cyan-50 text-slate-900">
 
-{% block page_shell %}
-  <!-- Mobile Header -->
-  <header class="md:hidden flex items-center justify-between px-4 py-3 bg-white/80 backdrop-blur shadow-sm sticky top-0 z-30">
-    <button
-      type="button"
-      class="inline-flex items-center justify-center rounded-lg p-2 hover:bg-slate-100 active:bg-slate-200"
-      onclick="toggleSidebar()"
-      aria-label="Abrir menu"
-    >
-      <!-- ícone menu -->
-      <i data-lucide="menu" class="w-6 h-6"></i>
-    </button>
+<!-- Mobile Header -->
+<header class="md:hidden flex items-center justify-between px-4 py-3 bg-white/80 backdrop-blur shadow-sm sticky top-0 z-40">
+  <button type="button"
+          class="inline-flex items-center justify-center rounded-lg p-2 hover:bg-slate-100 active:bg-slate-200"
+          onclick="toggleSidebar()"
+          aria-label="Abrir menu">
+    <i data-lucide="menu" class="w-6 h-6"></i>
+  </button>
 
-    <div class="font-semibold tracking-tight">
-      Smart Clothesline
-    </div>
+  <div class="font-semibold tracking-tight">Smart Clothesline</div>
+  <div class="w-10"></div>
+</header>
 
-    <!-- Spacer para equilibrar o header -->
-    <div class="w-10"></div>
-  </header>
+<div class="relative min-h-screen">
 
-  <div class="flex min-h-screen md:min-h-0 md:h-screen relative">
+  <!-- SIDEBAR FIXA SEMPRE -->
+  <aside
+    id="sidebar"
+    class="fixed inset-y-0 left-0 z-50 w-72 md:w-64 bg-white/90 backdrop-blur border-r border-slate-200
+           shadow-xl md:shadow-none
+           transform -translate-x-full md:translate-x-0
+           transition-transform duration-300 ease-in-out"
+    aria-label="Menu lateral"
+  >
+    <div class="h-full flex flex-col">
 
-    {% block sidebar %}
-      <!-- Sidebar / Drawer -->
-      <aside
-        id="sidebar"
-        class="fixed md:static inset-y-0 left-0 z-50 w-72 md:w-64 bg-white/90 backdrop-blur shadow-xl md:shadow-none
-               transform -translate-x-full md:translate-x-0
-               transition-transform duration-300 ease-in-out"
-        aria-label="Menu lateral"
-      >
-        <div class="h-full flex flex-col">
-          <!-- Mobile top inside sidebar -->
-          <div class="md:hidden flex items-center justify-between px-4 py-3 border-b">
-            <span class="font-semibold">Menu</span>
-            <button
-              type="button"
-              class="rounded-lg p-2 hover:bg-slate-100 active:bg-slate-200"
-              onclick="toggleSidebar()"
-              aria-label="Fechar menu"
-            >
-              <i data-lucide="x" class="w-6 h-6"></i>
-            </button>
-          </div>
-
-          <!-- Actual sidebar content -->
-          <div class="flex-1 overflow-y-auto">
-            {% include "partials/sidebar.html" %}
-          </div>
-        </div>
-      </aside>
-
-      <!-- Overlay (mobile) -->
-      <div
-        id="sidebarOverlay"
-        class="fixed inset-0 bg-black/40 hidden md:hidden z-40"
-        onclick="toggleSidebar()"
-        aria-hidden="true"
-      ></div>
-    {% endblock %}
-
-    <!-- Main -->
-    <main class="flex-1 w-full">
-      <div class="w-full max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-4 flex flex-col min-h-[calc(100vh-56px)] md:min-h-screen">
-        <div class="flex-1">
-          {% block content %}{% endblock %}
-        </div>
-
-        {% include "partials/footer.html" %}
+      <!-- Top da sidebar no mobile -->
+      <div class="md:hidden flex items-center justify-between px-4 py-3 border-b border-slate-100">
+        <span class="font-semibold">Menu</span>
+        <button type="button"
+                class="rounded-lg p-2 hover:bg-slate-100 active:bg-slate-200"
+                onclick="toggleSidebar()"
+                aria-label="Fechar menu">
+          <i data-lucide="x" class="w-6 h-6"></i>
+        </button>
       </div>
-    </main>
 
-  </div>
-{% endblock %}
+        {% include "partials/sidebar.html" %}
 
-<!-- Globals -->
+    </div>
+  </aside>
+
+  <!-- Overlay apenas mobile -->
+  <div id="sidebarOverlay"
+       class="fixed inset-0 bg-black/40 hidden md:hidden z-40"
+       onclick="toggleSidebar()"
+       aria-hidden="true"></div>
+
+  <!-- MAIN: empurrado para a direita em desktop -->
+  <main class="min-h-screen md:pl-64">
+    <!-- em ecrãs >= md, sidebar tem 16rem (w-64), por isso pl-64 -->
+    <div class="w-full max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-4 flex flex-col min-h-[calc(100vh-56px)] md:min-h-screen">
+      <div class="flex-1">
+        {% block content %}{% endblock %}
+      </div>
+
+      {% include "partials/footer.html" %}
+    </div>
+  </main>
+
+</div>
+
 <script>
-  // Corrigido: estava com aspas extra no teu código original
   window.CURRENT_SERIAL = "{{ drying_rack.serial_number|default_if_none:''|escapejs }}";
 </script>
-
 <script src="{% static 'app/script.js' %}"></script>
 
 <script>
@@ -132,24 +110,22 @@
     );
   }
 
-  // Fecha sidebar ao clicar em links/botões (mobile)
   document.addEventListener("click", function (e) {
     const sidebar = document.getElementById("sidebar");
     const overlay = document.getElementById("sidebarOverlay");
     if (!sidebar || !overlay || overlay.classList.contains("hidden")) return;
 
     const el = e.target.closest("a, button");
-    if (el && sidebar.contains(el)) {
-      toggleSidebar();
-    }
+    if (el && sidebar.contains(el)) toggleSidebar();
   });
 </script>
 
 {% block extra_js %}{% endblock %}
-
 {% block page_modals %}
   {% include "partials/modals/adicionar_estendal.html" %}
 {% endblock %}
+
+<script>lucide.createIcons();</script>
 
 </body>
 </html>
