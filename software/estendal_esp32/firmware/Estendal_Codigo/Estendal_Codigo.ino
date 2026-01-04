@@ -8,8 +8,8 @@
    ===================================================== */
 
 // ---- WiFi ----
-const char* ssid = "Vodafone-8C8BB5";
-const char* password = "d9Y4495wJw";
+const char* ssid = "Xiaomi";
+const char* password = "francisco125";
 
 // ---- APIs ----
 const char* apiSensors =
@@ -98,7 +98,7 @@ void setupADC() {
 
 void connectWiFi() {
   WiFi.begin(ssid, password);
-  Serial.print("Ligando ao WiFi");
+  Serial.print("A ligar ao WiFi");
 
   while (WiFi.status() != WL_CONNECTED) {
     delay(500);
@@ -165,7 +165,7 @@ void lerEstadoDoBackend() {
       overrideEstado = (backendState == "extended") ? ABERTO : FECHADO;
       overrideAteMs = millis() + OVERRIDE_TTL_MS;
 
-      Serial.println(">> OVERRIDE MANUAL ATIVADO");
+      Serial.println(">> OVERRIDE MANUAL ATIVO");
     }
   }
 
@@ -187,7 +187,7 @@ void decidirEstado(bool rain, int lightLevel) {
   // Verificar se override expirou
   if (overrideAtivo && (long)(millis() - overrideAteMs) >= 0) {
     overrideAtivo = false;
-    Serial.println(">> OVERRIDE EXPIRADO, VOLTAR AO AUTOMÁTICO");
+    Serial.println(">> OVERRIDE EXPIROU, VOLTAR AO AUTOMÁTICO");
   }
 
   // PRIORIDADE 2 — override manual
@@ -230,7 +230,7 @@ void enviarSensores(float temp, float hum, int lightLevel, bool rain) {
   payload += "}";
 
   int code = http.POST(payload);
-  Serial.print("POST sensores HTTP: ");
+  Serial.print("POST HTTP: ");
   Serial.println(code);
 
   http.end();
@@ -301,5 +301,5 @@ void loop() {
   Serial.println(estadoAtual == ABERTO ? "ABERTO" : "FECHADO");
   Serial.println();
 
-  delay(15000);
+  delay(5000);
 }
