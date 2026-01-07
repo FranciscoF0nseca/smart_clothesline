@@ -1,7 +1,8 @@
 # Smart-Clothesline
 
 ## Descrição
-Estendal Inteligente desenvolvido para otimizar a secagem de roupa através de tecnologias automatizadas.
+Este projeto foi desenvolvido no âmbito académico e tem fins exclusivamente educacionais, é um 
+estendal Inteligente desenvolvido para otimizar a secagem de roupa através de tecnologias automatizadas.
 Tem sensores integrados para proteger as respetivas peças do ambiente natural.
 
 ## Estrutura
